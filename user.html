@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/4.2.0/firebase.js"></script>
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div name="posts">
+  <input id="content" type="text" placeholder="content">
+  <select name="" id="privacy">
+    <option value="onlyme">only me</option>
+    <option value="friend">friend</option>
+    <option value="public">public</option>
+  </select>
+  <input type="file" value="upload" accept=".jpg" id="fileButton">
+  <input type="hidden" id="image">
+  <button onclick="post()">post</button>
+</div>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyAW8VF35-_YFnNNBMT9RAjzCHj-SUqR8Uw",
+    authDomain: "filebase-70567.firebaseapp.com",
+    projectId: "filebase-70567",
+    storageBucket: "filebase-70567.appspot.com",
+    messagingSenderId: "370746607348",
+    appId: "1:370746607348:web:b17a663c94df4db78c00a1",
+    measurementId: "G-8VZX3F9WF8"
+  };
+  firebase.initializeApp(firebaseConfig);
+  let fbBucketName = 'images';
+  let fileButton = document.getElementById('fileButton');
+  fileButton.addEventListener('change', function (e) {
+    let file = e.target.files[0];
+    let storageRef = firebase.storage().ref(`${fbBucketName}/${file.name}`);
+    let uploadTask = storageRef.put(file);
+    uploadTask.on(firebase.storage.TaskEvent.STATE_CHANGED,
+            function (snapshot) {
+              switch (snapshot.state) {
+                case firebase.storage.TaskState.PAUSED: // or 'paused'
+                  break;
+                case firebase.storage.TaskState.RUNNING: // or 'running'
+                  break;
+              }
+            },
+            function (error) {
+              switch (error.code) {
+                case 'storage/unauthorized':
+                  break;
+                case 'storage/canceled':
+                  break;
+                case 'storage/unknown':
+                  break;
+              }
+            }, function () {
+              let downloadURL = uploadTask.snapshot.downloadURL;
+              document.getElementById("image").value = downloadURL;
+            });
+  });
+
+  function post(){
+    let content = $('#content').val();
+    let privacy = $('#privacy').val();
+    let timePost = new Date();
+    let img = $('#image').val();
+    let post = {content:content, privacy: privacy, timePost: timePost}
+    let image = {path:img, post:post}
+
+    $.ajax({
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': window.sessionStorage.getItem('TOKEN_KEY')
+      },
+      type: "POST",
+      data: JSON.stringify(image),
+      //tên API
+      url: "http://localhost:8080/user/createPost",
+      //xử lý khi thành công
+      success: function (data){
+        console.log(data)
+      }
+    })
+  event.preventDefault();
+  }
+</script>
+</body>
+</html>
